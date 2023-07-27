@@ -27,6 +27,12 @@ const makeRouter = (ctx: AppContext) => {
     })
   })
 
+  // router.get('/', (_req, res) => {
+  //   res.json({
+  //     herp: 'derp',
+  //   })
+  // })
+
   return router
 }
 export default makeRouter
