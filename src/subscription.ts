@@ -20,15 +20,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
       }
     }
 
-    // for (const post of ops.posts.deletes) {
-    //   if (
-    //     post.uri ===
-    //     'at://did:plc:urx3a5yigiv7huqo7odvoapt/app.bsky.feed.post/3k2ocez5njj2r'
-    //   ) {
-    //     console.log(`-DELETE-`, post)
-    //   }
-    // }
-
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
