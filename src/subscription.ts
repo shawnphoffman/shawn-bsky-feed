@@ -13,14 +13,28 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     // Just for fun :)
     // Delete before actually using
     for (const post of ops.posts.creates) {
-      console.log(post.record.text)
+      // console.log(`$: ${post.record.text}`)
+      if (post.author === process.env.FEEDGEN_PUBLISHER_DID) {
+        // console.log(`+CREATE+`, post)
+        console.log(`${post.author}: "${post.record.text}" [${post.uri}]`)
+      }
     }
+
+    // for (const post of ops.posts.deletes) {
+    //   if (
+    //     post.uri ===
+    //     'at://did:plc:urx3a5yigiv7huqo7odvoapt/app.bsky.feed.post/3k2ocez5njj2r'
+    //   ) {
+    //     console.log(`-DELETE-`, post)
+    //   }
+    // }
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
         // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
+        // return create.record.text.toLowerCase().includes('shawn')
+        return create.author === process.env.FEEDGEN_PUBLISHER_DID
       })
       .map((create) => {
         // map alf-related posts to a db row

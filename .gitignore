@@ -1,3 +1,7 @@
+# Other
+samples/
+db.sqlite
+
 # Logs
 logs
 *.log
