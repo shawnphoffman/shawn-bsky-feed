@@ -21,11 +21,11 @@ const run = async () => {
     serviceDid,
   })
   await server.start()
-  console.log(
-    `===========
+  console.log(`
+==================================
 🤖 running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}
-===========`,
-  )
+☑️ node: ${process.version}
+==================================`)
 }
 
 const maybeStr = (val?: string) => {

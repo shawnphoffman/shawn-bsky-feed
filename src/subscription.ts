@@ -3,7 +3,7 @@ import {
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-import redis, { RedisKeys } from './util/redis'
+// import redis, { RedisKeys } from './util/redis'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
@@ -48,12 +48,12 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
         .execute()
     }
     if (postsToCreate.length > 0) {
-      const redisPosts = postsToCreate.reduce((memo, el) => {
-        memo[el.uri] = el
-        return memo
-      }, {})
-      const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
-      console.log(`Creating: ${t}`)
+      // const redisPosts = postsToCreate.reduce((memo, el) => {
+      //   memo[el.uri] = el
+      //   return memo
+      // }, {})
+      // const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
+      // console.log(`Creating: ${t}`)
       await this.db
         .insertInto('post')
         .values(postsToCreate)
