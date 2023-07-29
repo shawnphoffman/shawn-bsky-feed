@@ -57,12 +57,10 @@ export class FeedGenerator {
 	}
 
 	async start(): Promise<http.Server> {
-		// TODO get author feed
-		const feed = await getAuthorFeed()
-
 		await migrateToLatest(this.db)
-
 		this.firehose.run(this.cfg.subscriptionReconnectDelay)
+
+		const feed = await getAuthorFeed()
 		await this.firehose.db
 			.insertInto('post')
 			.values(
@@ -70,12 +68,11 @@ export class FeedGenerator {
 					return {
 						uri: post.uri,
 						cid: post.cid,
-						indexedAt: new Date().toISOString(),
+						indexedAt: post.indexedAt,
 						// @ts-ignore
 						replyParent: post?.record?.reply?.parent?.uri,
 						// @ts-ignore
 						replyRoot: post?.record?.reply?.root?.uri,
-						// replyParent: undefined//post.replyParent,
 					}
 				})
 			)
