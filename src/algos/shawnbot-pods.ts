@@ -17,7 +17,10 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
   console.log('handler', { handle, password })
   // only update this if in a test environment
   const agent = new BskyAgent({ service: 'https://bsky.social' })
-  await agent.login({ identifier: handle, password })
+  const loginResponse = await agent.login({ identifier: handle, password })
+  if (!loginResponse?.success) {
+    console.error('BLUESKY LOGIN FAILED', loginResponse)
+  }
   console.log('logged in', { handle, password })
   const resp = await agent.getAuthorFeed({
     actor: handle,
