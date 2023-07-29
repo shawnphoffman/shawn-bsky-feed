@@ -10,7 +10,7 @@ import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import additionalRoutes from './additional-routes'
-import { getAuthorFeed } from './util/bsky'
+import { getPodcastEmbedFeed } from './util/bsky'
 
 export class FeedGenerator {
 	public app: express.Application
@@ -60,7 +60,7 @@ export class FeedGenerator {
 		await migrateToLatest(this.db)
 		this.firehose.run(this.cfg.subscriptionReconnectDelay)
 
-		const feed = await getAuthorFeed()
+		const feed = await getPodcastEmbedFeed()
 		await this.firehose.db
 			.insertInto('post')
 			.values(

@@ -21,9 +21,11 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
-				// only alf-related posts
 				// return create.record.text.toLowerCase().includes('shawn')
-				return create.author === process.env.FEEDGEN_PUBLISHER_DID
+				// if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
+				// 	console.log({ create, test: create.record.embed !== undefined && create.record.reply === undefined })
+				// }
+				return create.author === process.env.FEEDGEN_PUBLISHER_DID && create.record.embed !== undefined && create.record.reply === undefined
 			})
 			.map(create => {
 				// map alf-related posts to a db row
