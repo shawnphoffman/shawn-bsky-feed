@@ -1,6 +1,7 @@
 # Other
 samples/
 db.sqlite
+.vscode/settings.json
 
 # Logs
 logs
