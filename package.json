@@ -12,6 +12,9 @@
 		"dev": "ts-node src/index.ts",
 		"build": "tsc"
 	},
+	"engines": {
+		"node": "18.x"
+	},
 	"dependencies": {
 		"@atproto/api": "^0.3.7",
 		"@atproto/did-resolver": "^0.1.0",
