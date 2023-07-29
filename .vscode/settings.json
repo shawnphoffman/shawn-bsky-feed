@@ -1,0 +1,11 @@
+{
+	"search.exclude": {
+		"src/lexicon": true
+	},
+	"search.searchEditor.reusePriorSearchConfiguration": true,
+	"search.showLineNumbers": true,
+	"search.sortOrder": "countDescending",
+	"workbench.activityBar.visible": true,
+	"workbench.colorCustomizations": {},
+	"workbench.colorTheme": "Abyss",
+}
