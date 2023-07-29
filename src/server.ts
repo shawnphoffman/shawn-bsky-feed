@@ -9,6 +9,8 @@ import { createDb, Database, migrateToLatest } from './db'
 import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
+import additionalRoutes from './additional-routes'
+import { getAuthorFeed } from './util/bsky'
 
 export class FeedGenerator {
 	public app: express.Application
@@ -49,16 +51,41 @@ export class FeedGenerator {
 		describeGenerator(server, ctx)
 		app.use(server.xrpc.router)
 		app.use(wellKnown(ctx))
+		app.use(additionalRoutes(ctx))
 
 		return new FeedGenerator(app, db, firehose, cfg)
 	}
 
 	async start(): Promise<http.Server> {
+		// TODO get author feed
+		const feed = await getAuthorFeed()
+
 		await migrateToLatest(this.db)
+
 		this.firehose.run(this.cfg.subscriptionReconnectDelay)
-		// this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
+		await this.firehose.db
+			.insertInto('post')
+			.values(
+				feed.map(({ post }) => {
+					return {
+						uri: post.uri,
+						cid: post.cid,
+						indexedAt: new Date().toISOString(),
+						// @ts-ignore
+						replyParent: post?.record?.reply?.parent?.uri,
+						// @ts-ignore
+						replyRoot: post?.record?.reply?.root?.uri,
+						// replyParent: undefined//post.replyParent,
+					}
+				})
+			)
+			.onConflict(oc => oc.doNothing())
+			.execute()
+
 		this.server = this.app.listen(this.cfg.port)
+
 		await events.once(this.server, 'listening')
+
 		return this.server
 	}
 }

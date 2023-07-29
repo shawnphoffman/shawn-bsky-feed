@@ -8,7 +8,7 @@
 	"scripts": {
 		"publishFeed": "ts-node scripts/publishFeedGen.ts",
 		"removeFeed": "ts-node scripts/removeFeed.ts",
-		"start": "node dist",
+		"start": "node --no-warnings dist",
 		"dev": "ts-node src/index.ts",
 		"build": "tsc"
 	},
