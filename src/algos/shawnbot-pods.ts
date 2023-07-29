@@ -25,15 +25,18 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     cursor: params.cursor,
   })
   const feed = resp.data.feed.map((post) => ({ post: post.post.uri }))
-  const cursor = resp.data.cursor
+  let cursor: string | undefined
+  // const cursor = resp.data.cursor
 
   console.log('feed', feed)
-  console.log('cursor', cursor)
+  // console.log('cursor', cursor)
 
-  // const last = feed.at(-1)
-  // if (last) {
-  //   cursor = `${new Date(last.indexedAt).getTime()}::${last.cid}`
-  // }
+  // const last = feed.slice(-1)
+
+  const last = resp.data.feed.at(-1)
+  if (last) {
+    cursor = `${new Date(last.post.indexedAt).getTime()}::${last.cid}`
+  }
 
   return {
     cursor,
