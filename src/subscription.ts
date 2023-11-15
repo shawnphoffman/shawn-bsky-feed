@@ -39,8 +39,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 
 		if (postsToDelete.length > 0) {
-			const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
-			console.log(`Deleting: ${t}`)
+			// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
+			// console.log(`Deleting: ${t}`)
 			await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute()
 		}
 		if (postsToCreate.length > 0) {
