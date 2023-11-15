@@ -1,6 +1,6 @@
 import { OutputSchema as RepoEvent, isCommit } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-// import redis, { RedisKeys } from './util/redis'
+import redis, { RedisKeys } from './util/redis'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
@@ -22,9 +22,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
 				// return create.record.text.toLowerCase().includes('shawn')
-				// if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
-				// 	console.log({ create, test: create.record.embed !== undefined && create.record.reply === undefined })
-				// }
+				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
+					console.log({ create, test: create.record.embed !== undefined && create.record.reply === undefined })
+				}
 				return create.author === process.env.FEEDGEN_PUBLISHER_DID && create.record.embed !== undefined && create.record.reply === undefined
 			})
 			.map(create => {
@@ -39,17 +39,17 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 
 		if (postsToDelete.length > 0) {
-			// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
-			// console.log(`Deleting: ${t}`)
+			const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
+			console.log(`Deleting: ${t}`)
 			await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute()
 		}
 		if (postsToCreate.length > 0) {
-			// const redisPosts = postsToCreate.reduce((memo, el) => {
-			//   memo[el.uri] = el
-			//   return memo
-			// }, {})
-			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
-			// console.log(`Creating: ${t}`)
+			const redisPosts = postsToCreate.reduce((memo, el) => {
+				memo[el.uri] = el
+				return memo
+			}, {})
+			const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
+			console.log(`Creating: ${t}`)
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)
