@@ -6,30 +6,32 @@ import { getPodcastEmbedFeed } from './util/bsky'
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
 
-	router.get('/redis', async (req, res) => {
-		const t = await redis.hgetall(RedisKeys.ShawnBotPost)
-		res.json({ redis: t })
-	})
-
-	router.get('/derp', (_req, res) => {
-		res.json({
-			herp: 'derp',
-		})
-	})
-
 	router.get('/health', (_req, res) => {
 		res.sendStatus(200)
 	})
 
+	router.get('/redis', async (req, res) => {
+		try {
+			const data = await redis.hgetall(RedisKeys.ShawnBotPost)
+
+			if (!data) {
+				return res.json({ redis: [] })
+			}
+
+			let dataArray = Object.values(data)
+
+			dataArray.sort((a: any, b: any) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime())
+
+			res.json({ length: dataArray.length, redis: dataArray })
+		} catch (error) {
+			console.log('error', error)
+			res.json({ error })
+		}
+	})
+
 	router.get('/db/posts', async (_req, res) => {
-		await ctx.db
-			.selectFrom('post')
-			.selectAll()
-			.orderBy('indexedAt', 'desc')
-			.execute()
-			.then(posts => {
-				res.json(posts)
-			})
+		const posts = await ctx.db.selectFrom('post').selectAll().orderBy('indexedAt', 'desc').execute()
+		res.json({ length: posts.length, posts })
 	})
 
 	router.get('/db/state', async (_req, res) => {
@@ -75,6 +77,10 @@ const makeRouter = (ctx: AppContext) => {
 			.then(state => {
 				res.json({ state })
 			})
+	})
+
+	router.get('/kill', async (_req, res) => {
+		process.exit(0)
 	})
 
 	return router
