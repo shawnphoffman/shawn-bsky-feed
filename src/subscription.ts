@@ -7,28 +7,72 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		if (!isCommit(evt)) return
 		const ops = await getOpsByType(evt)
 
-		// This logs the text of every post off the firehose.
-		// Just for fun :)
-		// Delete before actually using
-		for (const post of ops.posts.creates) {
-			// console.log(`$: ${post.record.text}`)
-			if (post.author === process.env.FEEDGEN_PUBLISHER_DID) {
-				// console.log(`+CREATE+`, post)
-				console.log(`${post.author}: "${post.record.text}" [${post.uri}]`)
-			}
-		}
-
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
-				// return create.record.text.toLowerCase().includes('shawn')
+				// Only grab posts from ShawnBot
 				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
-					console.log({ create, test: create.record.embed !== undefined && create.record.reply === undefined })
+					console.log('🆕', create)
+
+					// Ignore replies
+					if (create.record.reply !== undefined) {
+						console.log(`❌ Ignoring reply: ${create.record.text}`)
+						return false
+					}
+
+					const hasFacets = create.record.facets !== undefined && create.record.facets.length > 0
+
+					// If it doesn't have facets, it's a simple text post
+					// I should probably remove this
+					if (!hasFacets) {
+						console.log(` - Include no facets: ${create.record.text}`)
+						return true
+					}
+
+					const hasHashtags =
+						hasFacets &&
+						// @ts-ignore
+						create.record.facets.some(facet => {
+							console.log(` - facet: ${JSON.stringify(facet)}`)
+							return facet.features.some(f => {
+								return f.$type === 'app.bsky.richtext.facet#tag'
+							})
+						})
+
+					console.log(` - Hashtags: ${hasHashtags}`)
+
+					// If it has hashtags, check for #starwars
+					if (hasHashtags) {
+						// @ts-ignore
+						const hasStarWarsTag = create.record.facets.some(facet => {
+							return facet.features.some(f => {
+								if (f.$type !== 'app.bsky.richtext.facet#tag') return false
+								const wow = f as { tag: string }
+								console.log(` - tag: ${wow.tag}`)
+								return wow.tag?.toLowerCase() === 'starwars'
+							})
+						})
+						// Don't include posts without the #starwars tag if they have hashtags
+						if (!hasStarWarsTag) {
+							console.log(`❌ Ignoring non-starwars: ${create.record.text}`)
+							return false
+						}
+						// Include posts with the #starwars tag
+						return true
+					}
+
+					// Include posts with embeds as a last resort
+					const hasEmbed = create.record.embed !== undefined
+
+					console.log(` - HasEmbed: ${hasEmbed}`)
+
+					return hasEmbed
 				}
-				return create.author === process.env.FEEDGEN_PUBLISHER_DID && create.record.embed !== undefined && create.record.reply === undefined
+
+				return false
 			})
 			.map(create => {
-				// map alf-related posts to a db row
+				console.log(`✅ Creating: ${create.record.text}`)
 				return {
 					uri: create.uri,
 					cid: create.cid,
