@@ -20,7 +20,12 @@ const makeRouter = (ctx: AppContext) => {
 	})
 
 	router.get('/redis2', async (req, res) => {
-		const client = await redisClient.connect()
+		let client
+		if (redisClient.isOpen && redisClient.isReady) {
+			client = redisClient
+		} else {
+			client = await redisClient.connect()
+		}
 		try {
 			const data = await client.ZRANGE(RedisKeys.StarWarsZRANGE, '+inf', 0, { REV: true, BY: 'SCORE' })
 
@@ -36,8 +41,8 @@ const makeRouter = (ctx: AppContext) => {
 		} catch (error) {
 			console.log('error', error)
 			res.json({ error })
-		} finally {
-			client.disconnect()
+			// } finally {
+			// 	client.disconnect()
 		}
 	})
 
