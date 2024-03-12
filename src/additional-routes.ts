@@ -40,7 +40,7 @@ const makeRouter = (ctx: AppContext) => {
 			res.json({ length: data.length, redis: data })
 		} catch (error) {
 			console.log('error', error)
-			res.json({ error })
+			res.json({ error: JSON.stringify(error, null, 2) })
 			// } finally {
 			// 	client.disconnect()
 		}
