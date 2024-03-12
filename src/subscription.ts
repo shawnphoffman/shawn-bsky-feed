@@ -1,6 +1,6 @@
 import { OutputSchema as RepoEvent, isCommit } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-import redis, { RedisKeys } from './util/redis'
+import { RedisKeys, redisClient } from './util/redis'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
@@ -83,17 +83,58 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 
 		if (postsToDelete.length > 0) {
-			// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
-			// console.log(`Deleting: ${t}`)
+			// const client = await redisClient.connect()
+			// try {
+			// 	// // TODO THIS IS GOING TO BE INSANE SO CHECK IF IT EXISTS FIRST
+			// 	// postsToDelete.forEach(d => redisClient.zRem(RedisKeys.ShawnBotPost, d))
+			// } catch (e) {
+			// 	console.error(e)
+			// } finally {
+			// 	client.disconnect()
+			// }
 			await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute()
 		}
 		if (postsToCreate.length > 0) {
-			const redisPosts = postsToCreate.reduce((memo, el) => {
-				memo[el.uri] = el
-				return memo
-			}, {})
-			const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
-			console.log(`Creating: ${t}`)
+			// const redisPosts = postsToCreate.reduce((memo, el) => {
+			// 	memo[el.uri] = el
+			// 	return memo
+			// }, {})
+			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
+			// console.log(`Creating: ${t}`)
+
+			let client
+			try {
+				if (redisClient.isOpen && redisClient.isReady) {
+					client = redisClient
+				} else {
+					client = await redisClient.connect()
+				}
+
+				client.on('error', function (err) {
+					console.log('Error ' + err)
+				})
+				postsToCreate.forEach(async c => {
+					console.log(`Caching: ${c.uri}`)
+					const dt = new Date(c.indexedAt).getTime()
+					try {
+						await client.multi().zAdd(RedisKeys.StarWarsZRANGE, { score: dt, value: c.uri }).exec()
+					} catch (e) {
+						console.log(`❌ EXCEPTION`)
+						console.error(e)
+					}
+				})
+			} catch (e) {
+				console.error(e)
+				// } finally {
+				// 	try {
+				// 		if (client && client.isOpen) {
+				// 			await client.disconnect()
+				// 		}
+				// 	} catch (e) {
+				// 		console.log('❌❌')
+				// 		console.error(e)
+				// 	}
+			}
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)
