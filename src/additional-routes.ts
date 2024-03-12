@@ -1,7 +1,16 @@
 import express from 'express'
 import { AppContext } from './config'
-import redis, { RedisKeys } from './util/redis'
+import redis, { RedisKeys, redisClient } from './util/redis'
 import { getPodcastEmbedFeed } from './util/bsky'
+// import { createClient, RedisClientOptions, RedisClientType } from "redis";
+
+type BskyPost = {
+	uri: string
+	cid: string
+	replyParent: boolean
+	replyRoot: boolean
+	indexedAt: string
+}
 
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
@@ -9,6 +18,68 @@ const makeRouter = (ctx: AppContext) => {
 	router.get('/health', (_req, res) => {
 		res.sendStatus(200)
 	})
+
+	router.get('/redis2', async (req, res) => {
+		const client = await redisClient.connect()
+		try {
+			const data = await client.ZRANGE(RedisKeys.StarWarsZRANGE, '+inf', 0, { REV: true, BY: 'SCORE' })
+
+			if (!data) {
+				return res.json({ redis: [] })
+			}
+
+			// let dataArray = Object.values(data)
+
+			// dataArray.sort((a: any, b: any) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime())
+
+			res.json({ length: data.length, redis: data })
+		} catch (error) {
+			console.log('error', error)
+			res.json({ error })
+		} finally {
+			client.disconnect()
+		}
+	})
+
+	// router.get('/redis2/update', async (req, res) => {
+	// 	const upstashExisting = await redis.hgetall(RedisKeys.ShawnBotPost)
+
+	// 	const client = await redisClient.connect()
+
+	// 	client.on('error', function (err) {
+	// 		console.log('Error ' + err)
+	// 	})
+
+	// 	// let testValues: string[] = []
+	// 	let out = {}
+
+	// 	try {
+	// 		if (upstashExisting) {
+	// 			Object.entries(upstashExisting).forEach(([key, value]: [string, BskyPost]) => {
+	// 				// client.multi().lPush(RedisKeys.ShawnBotPost, key).exec()
+	// 				const dt = new Date(value.indexedAt).getTime()
+	// 				client.multi().zAdd(RedisKeys.StarWarsZRANGE, { score: dt, value: key }).exec()
+	// 			})
+	// 		}
+
+	// 		// testValues = await client.lRange(RedisKeys.ShawnBotPost, 0, -1)
+	// 		out = {
+	// 			// lrange: await client.lRange(RedisKeys.ShawnBotPost, 0, -1),
+	// 			zrange: await client.zRange('z', 0, -1),
+	// 		}
+	// 	} catch (error) {
+	// 		console.log('error', error)
+	// 	} finally {
+	// 		client.disconnect()
+	// 	}
+
+	// 	res.json(out)
+	// 	// res.json({
+	// 	// 	redis: {
+	// 	// 		testValues,
+	// 	// 	},
+	// 	// })
+	// })
 
 	router.get('/redis', async (req, res) => {
 		try {
