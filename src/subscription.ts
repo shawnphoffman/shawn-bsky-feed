@@ -69,6 +69,16 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 					return hasEmbed
 				}
 
+				// C.K. Andor posts
+				if (create.author === 'did:plc:aghdedv5e64dlnm2ingixvwe' && process.env.CK_ANDOR_POST === 'true') {
+					if (create.record.text.toLowerCase().includes('one day closer to')) {
+						console.log('🥷', create)
+						return true
+					} else {
+						console.log(`❌ Ignoring Non-Andor C.K. Post: ${create.record.text}`)
+					}
+				}
+
 				return false
 			})
 			.map(create => {
