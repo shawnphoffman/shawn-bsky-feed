@@ -10,7 +10,7 @@ import { FirehoseSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import additionalRoutes from './additional-routes'
-import { getPodcastEmbedFeed } from './util/bsky'
+// import { getPodcastEmbedFeed } from './util/bsky'
 
 export class FeedGenerator {
 	public app: express.Application
@@ -63,24 +63,25 @@ export class FeedGenerator {
 		await migrateToLatest(this.db)
 		this.firehose.run(this.cfg.subscriptionReconnectDelay)
 
-		const feed = await getPodcastEmbedFeed()
-		await this.firehose.db
-			.insertInto('post')
-			.values(
-				feed.map(({ post }) => {
-					return {
-						uri: post.uri,
-						cid: post.cid,
-						indexedAt: post.indexedAt,
-						// @ts-ignore
-						replyParent: post?.record?.reply?.parent?.uri,
-						// @ts-ignore
-						replyRoot: post?.record?.reply?.root?.uri,
-					}
-				})
-			)
-			.onConflict(oc => oc.doNothing())
-			.execute()
+		// // NOTE STOP DOING THIS
+		// const feed = await getPodcastEmbedFeed()
+		// await this.firehose.db
+		// 	.insertInto('post')
+		// 	.values(
+		// 		feed.map(({ post }) => {
+		// 			return {
+		// 				uri: post.uri,
+		// 				cid: post.cid,
+		// 				indexedAt: post.indexedAt,
+		// 				// @ts-ignore
+		// 				replyParent: post?.record?.reply?.parent?.uri,
+		// 				// @ts-ignore
+		// 				replyRoot: post?.record?.reply?.root?.uri,
+		// 			}
+		// 		})
+		// 	)
+		// 	.onConflict(oc => oc.doNothing())
+		// 	.execute()
 
 		this.server = this.app.listen(this.cfg.port)
 
