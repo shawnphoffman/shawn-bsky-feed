@@ -2,6 +2,18 @@ import express from 'express'
 import { AppContext } from './config'
 import redis, { RedisKeys } from './util/redis'
 import { getPodcastEmbedFeed } from './util/bsky'
+import bodyParser from 'body-parser'
+// import { createClient, RedisClientOptions, RedisClientType } from "redis";
+
+type BskyPost = {
+	uri: string
+	cid: string
+	replyParent: boolean
+	replyRoot: boolean
+	indexedAt: string
+}
+
+var jsonParser = bodyParser.json()
 
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
@@ -77,6 +89,40 @@ const makeRouter = (ctx: AppContext) => {
 			.then(state => {
 				res.json({ state })
 			})
+	})
+
+	router.post('/force', jsonParser, async (req, res) => {
+		const key = req.headers['x-force-key']
+		if (process.env.FORCE_KEY !== key) {
+			return res.status(403).send('Forbidden')
+		}
+
+		if (!req.body) {
+			return res.status(400).send('Bad Request')
+		}
+
+		const { uri, cid, indexedAt, replyParent, replyRoot } = req.body
+
+		if (!uri || !cid || !indexedAt) {
+			return res.status(400).send('Bad Request')
+		}
+
+		const post = {
+			uri,
+			cid,
+			indexedAt,
+			replyParent,
+			replyRoot,
+		}
+
+		const resp = await ctx.db
+			.insertInto('post')
+			.values(post)
+			.returningAll()
+			.onConflict(oc => oc.doNothing())
+			.execute()
+
+		res.send(resp)
 	})
 
 	router.get('/kill', async (_req, res) => {
