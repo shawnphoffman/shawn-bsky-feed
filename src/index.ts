@@ -20,6 +20,7 @@ const run = async () => {
 ==================================
 🤖 running feed generator at http://${server.cfg.listenhost}:${server.cfg.port}
 ☑️ node: ${process.version}
+💽 db: ${process.env.FEEDGEN_SQLITE_LOCATION}
 ==================================`)
 }
 
