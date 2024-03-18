@@ -1,6 +1,9 @@
 import { OutputSchema as RepoEvent, isCommit } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import redis, { RedisKeys } from './util/redis'
+import { moderatePost } from '@atproto/api'
+import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
+import { labelPostAsSpoiler } from './util/bsky'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
@@ -10,6 +13,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
+				// console.log(create)
+				// console.log('\n')
+
 				// Only grab posts from ShawnBot
 				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
 					console.log('🆕', create)
@@ -110,5 +116,26 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				.onConflict(oc => oc.doNothing())
 				.execute()
 		}
+
+		// Moderation
+		ops.posts.creates.forEach(async post => {
+			if (!post?.record?.facets) return
+
+			if (post.record.langs?.includes('en') === false) return
+
+			const hasSpoilerTag = post.record.facets.some(facet => {
+				return facet.features.some(f => {
+					if (f.$type !== 'app.bsky.richtext.facet#tag') return false
+					const wow = f as { tag: string }
+					return wow.tag?.toLowerCase().includes('spoiler')
+				})
+			})
+
+			if (!hasSpoilerTag) return
+
+			console.log('⚠️ Labeling spoiler post: ', post.uri)
+
+			labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+		})
 	}
 }

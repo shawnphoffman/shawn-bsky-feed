@@ -1,4 +1,5 @@
 import { BskyAgent } from '@atproto/api'
+import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
 import dotenv from 'dotenv'
 
@@ -13,6 +14,7 @@ export const getPodcastEmbedFeed = async () => {
 	const loginResponse = await agent.login({ identifier: handle, password })
 	if (!loginResponse?.success) {
 		console.error('BLUESKY LOGIN FAILED', loginResponse)
+		return []
 	}
 
 	const resp = await agent.getAuthorFeed({
@@ -25,4 +27,43 @@ export const getPodcastEmbedFeed = async () => {
 	// console.log('feed', JSON.stringify(feed, null, 2))
 
 	return feed
+}
+
+export const labelPostAsSpoiler = async ({ uri, cid }) => {
+	try {
+		const agent = new BskyAgent({ service: 'https://bsky.social' })
+
+		const loginResponse = await agent.login({
+			identifier: process.env.MOD_BSKY_USERNAME!,
+			password: process.env.MOD_BSKY_PASSWORD!,
+		})
+		if (!loginResponse?.success) {
+			console.error('BLUESKY MOD LOGIN FAILED', loginResponse)
+			return
+		}
+
+		const data = {
+			event: {
+				$type: 'tools.ozone.moderation.defs#modEventLabel',
+				createLabelVals: ['spoiler'],
+				negateLabelVals: [],
+			},
+			subject: {
+				$type: 'com.atproto.repo.strongRef',
+				uri: uri,
+				cid: cid,
+			},
+			subjectBlobCids: [],
+			createdBy: process.env.MOD_BSKY_USERNAME!,
+			createdAt: new Date().toISOString(),
+		}
+
+		const temp = await agent
+			.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!)
+			.api.xrpc.call('tools.ozone.moderation.emitEvent', {}, data)
+
+		console.log('temp', temp)
+	} catch (error) {
+		console.log('spoiler label error', error)
+	}
 }
