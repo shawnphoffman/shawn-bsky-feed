@@ -37,13 +37,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 						hasFacets &&
 						// @ts-ignore
 						create.record.facets.some(facet => {
-							console.log(` - facet: ${JSON.stringify(facet)}`)
+							// console.log(` - facet: ${JSON.stringify(facet)}`)
 							return facet.features.some(f => {
 								return f.$type === 'app.bsky.richtext.facet#tag'
 							})
 						})
 
-					console.log(` - Hashtags: ${hasHashtags}`)
+					// console.log(` - Hashtags: ${hasHashtags}`)
 
 					// If it has hashtags, check for #starwars
 					if (hasHashtags) {
@@ -132,9 +132,10 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
 			if (!hasSpoilerTag) return
 
+			console.log('')
 			console.log('⚠️ Labeling spoiler post: ', post.uri)
 
-			labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+			await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
 		})
 	}
 }

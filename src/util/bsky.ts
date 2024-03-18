@@ -58,12 +58,10 @@ export const labelPostAsSpoiler = async ({ uri, cid }) => {
 			createdAt: new Date().toISOString(),
 		}
 
-		const temp = await agent
-			.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!)
-			.api.xrpc.call('tools.ozone.moderation.emitEvent', {}, data)
+		await agent.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!).api.xrpc.call('tools.ozone.moderation.emitEvent', {}, data)
 
-		console.log('temp', temp)
+		// console.log('temp', temp)
 	} catch (error) {
-		console.log('spoiler label error', error)
+		console.log('❌❌❌ spoiler label error', error)
 	}
 }
