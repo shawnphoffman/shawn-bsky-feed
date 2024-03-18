@@ -1,8 +1,6 @@
 import { OutputSchema as RepoEvent, isCommit } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-import redis, { RedisKeys } from './util/redis'
-import { moderatePost } from '@atproto/api'
-import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
+// import redis, { RedisKeys } from './util/redis'
 import { labelPostAsSpoiler } from './util/bsky'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
@@ -104,12 +102,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute()
 		}
 		if (postsToCreate.length > 0) {
-			const redisPosts = postsToCreate.reduce((memo, el) => {
-				memo[el.uri] = el
-				return memo
-			}, {})
-			const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
-			console.log(`Creating: ${t}`)
+			// const redisPosts = postsToCreate.reduce((memo, el) => {
+			// 	memo[el.uri] = el
+			// 	return memo
+			// }, {})
+			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
+			// console.log(`Creating: ${t}`)
+			console.log('Add posts to db:', postsToCreate)
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)
