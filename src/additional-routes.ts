@@ -5,13 +5,13 @@ import { getPodcastEmbedFeed } from './util/bsky'
 import bodyParser from 'body-parser'
 // import { createClient, RedisClientOptions, RedisClientType } from "redis";
 
-type BskyPost = {
-	uri: string
-	cid: string
-	replyParent: boolean
-	replyRoot: boolean
-	indexedAt: string
-}
+// type BskyPost = {
+// 	uri: string
+// 	cid: string
+// 	replyParent: boolean
+// 	replyRoot: boolean
+// 	indexedAt: string
+// }
 
 var jsonParser = bodyParser.json()
 
