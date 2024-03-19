@@ -3,6 +3,10 @@ import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 // import redis, { RedisKeys } from './util/redis'
 import { labelPostAsSpoiler } from './util/bsky'
 
+const includeDids = process.env.FEED_INCLUDE_DIDS?.split(',') ?? []
+
+// TODO - Cron job that deletes old posts from the db
+
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
 		if (!isCommit(evt)) return
@@ -14,9 +18,10 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				// console.log(create)
 				// console.log('\n')
 
-				// Only grab posts from ShawnBot
-				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
-					console.log('🆕', create)
+				// SHAWNBOT POSTS
+				if (create.author === process.env.SHAWNBOT_DID) {
+					console.log('')
+					console.log('🆕 ShawnBot', create)
 
 					// Ignore replies
 					if (create.record.reply !== undefined) {
@@ -68,15 +73,35 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 					// Include posts with embeds as a last resort
 					const hasEmbed = create.record.embed !== undefined
 
-					console.log(` - HasEmbed: ${hasEmbed}`)
+					console.log(` - HasEmbed?: ${hasEmbed}`)
+
+					return hasEmbed
+				}
+
+				// MISC POSTS
+				if (includeDids.includes(create.author)) {
+					console.log('')
+					console.log('🆕 IncludeDID', create)
+
+					// Ignore replies
+					if (create.record.reply !== undefined) {
+						console.log(`❌ Ignoring reply: ${create.record.text}`)
+						return false
+					}
+
+					// Only include posts with embeds
+					const hasEmbed = create.record.embed !== undefined
+
+					console.log(` - HasEmbed?: ${hasEmbed}`)
 
 					return hasEmbed
 				}
 
 				// C.K. Andor posts
-				if (create.author === 'did:plc:aghdedv5e64dlnm2ingixvwe' && process.env.CK_ANDOR_POST === 'true') {
+				if (create.author === process.env.CK_DID && process.env.CK_ANDOR_POST === 'true') {
 					if (create.record.text.toLowerCase().includes('one day closer to')) {
-						console.log('🥷', create)
+						console.log('')
+						console.log('🆕 CK Andor', create)
 						return true
 					} else {
 						console.log(`❌ Ignoring Non-Andor C.K. Post: ${create.record.text}`)
@@ -97,9 +122,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 
 		if (postsToDelete.length > 0) {
+			// TODO - Aggregate these and delete them in batches
+
 			// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
 			// console.log(`Deleting: ${t}`)
-			await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).execute()
+			const deletedRows = await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).executeTakeFirst()
+			if (deletedRows.numDeletedRows > 0) {
+				console.log('🗑️ Deleted:', deletedRows.numDeletedRows.toString())
+			}
 		}
 		if (postsToCreate.length > 0) {
 			// const redisPosts = postsToCreate.reduce((memo, el) => {
