@@ -58,7 +58,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 							return facet.features.some(f => {
 								if (f.$type !== 'app.bsky.richtext.facet#tag') return false
 								const wow = f as { tag: string }
-								console.log(` - tag: ${wow.tag}`)
+								console.log(`  #️⃣ tag: ${wow.tag}`)
 								return wow.tag?.toLowerCase() === 'starwars'
 							})
 						})
@@ -112,7 +112,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				return false
 			})
 			.map(create => {
-				console.log(`✅ Creating: ${create.uri}`)
+				console.log(`  ✅ Creating: ${create.uri}`)
 				return {
 					uri: create.uri,
 					cid: create.cid,
@@ -129,7 +129,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				// console.log(`Deleting: ${t}`)
 				const deletedRows = await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).executeTakeFirst()
 				if (deletedRows.numDeletedRows > 0) {
-					console.log('🗑️ Deleted:', deletedRows.numDeletedRows.toString())
+					console.log('🗑️  Deleted:', deletedRows.numDeletedRows.toString())
 				}
 			} catch (error) {
 				console.error('❌❌🗑️ Error deleting posts:', error)
@@ -142,7 +142,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			// }, {})
 			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
 			// console.log(`Creating: ${t}`)
-			console.log('Add posts to db:', postsToCreate.length)
+			console.log('💽  Add posts to db:', postsToCreate.length)
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)

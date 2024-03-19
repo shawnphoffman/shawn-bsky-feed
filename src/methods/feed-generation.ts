@@ -2,7 +2,7 @@ import { InvalidRequestError } from '@atproto/xrpc-server'
 import { Server } from '../lexicon'
 import { AppContext } from '../config'
 import algos from '../algos'
-import { validateAuth } from '../auth'
+// import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
 
 export default function (server: Server, ctx: AppContext) {
