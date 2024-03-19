@@ -6,6 +6,7 @@ import { labelPostAsSpoiler } from './util/bsky'
 const includeDids = process.env.FEED_INCLUDE_DIDS?.split(',') ?? []
 
 // TODO - Cron job that deletes old posts from the db
+// TODO - Web UI for manual editing
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
@@ -20,8 +21,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
 				// SHAWNBOT POSTS
 				if (create.author === process.env.SHAWNBOT_DID) {
-					console.log('')
-					console.log('🆕 ShawnBot', create)
+					console.log('\n+++++++++++++++++++++++++')
+					console.log('🆕 ShawnBot', create.record.text)
 
 					// Ignore replies
 					if (create.record.reply !== undefined) {
@@ -80,8 +81,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
 				// MISC POSTS
 				if (includeDids.includes(create.author)) {
-					console.log('')
-					console.log('🆕 IncludeDID', create)
+					console.log('\n+++++++++++++++++++++++++')
+					console.log('🆕 IncludeDID', create.record.text)
 
 					// Ignore replies
 					if (create.record.reply !== undefined) {
@@ -100,8 +101,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				// C.K. Andor posts
 				if (create.author === process.env.CK_DID && process.env.CK_ANDOR_POST === 'true') {
 					if (create.record.text.toLowerCase().includes('one day closer to')) {
-						console.log('')
-						console.log('🆕 CK Andor', create)
+						console.log('\n+++++++++++++++++++++++++')
+						console.log('🆕 CK Andor', create.record.text)
 						return true
 					} else {
 						console.log(`❌ Ignoring Non-Andor C.K. Post: ${create.record.text}`)
@@ -111,7 +112,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				return false
 			})
 			.map(create => {
-				console.log(`✅ Creating: ${create.record.text}`)
+				console.log(`✅ Creating: ${create.uri}`)
 				return {
 					uri: create.uri,
 					cid: create.cid,
@@ -138,7 +139,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			// }, {})
 			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
 			// console.log(`Creating: ${t}`)
-			console.log('Add posts to db:', postsToCreate)
+			console.log('Add posts to db:', postsToCreate.length)
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)
