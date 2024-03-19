@@ -123,13 +123,16 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 
 		if (postsToDelete.length > 0) {
-			// TODO - Aggregate these and delete them in batches
-
-			// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
-			// console.log(`Deleting: ${t}`)
-			const deletedRows = await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).executeTakeFirst()
-			if (deletedRows.numDeletedRows > 0) {
-				console.log('🗑️ Deleted:', deletedRows.numDeletedRows.toString())
+			try {
+				// TODO - Aggregate these and delete them in batches
+				// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
+				// console.log(`Deleting: ${t}`)
+				const deletedRows = await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).executeTakeFirst()
+				if (deletedRows.numDeletedRows > 0) {
+					console.log('🗑️ Deleted:', deletedRows.numDeletedRows.toString())
+				}
+			} catch (error) {
+				console.error('❌❌🗑️ Error deleting posts:', error)
 			}
 		}
 		if (postsToCreate.length > 0) {

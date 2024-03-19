@@ -18,7 +18,12 @@ var jsonParser = bodyParser.json()
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
 
-	router.get('/health', (_req, res) => {
+	router.get('/health', async (_req, res) => {
+		const temp = await ctx.db
+			.selectFrom('post')
+			.select(({ fn }) => fn.countAll().as('num_posts'))
+			.executeTakeFirst()
+		console.log(`✅ health check | post count: ${temp?.num_posts ?? 0}`)
 		res.sendStatus(200)
 	})
 
