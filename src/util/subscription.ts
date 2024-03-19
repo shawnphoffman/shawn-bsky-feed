@@ -21,7 +21,7 @@ export abstract class FirehoseSubscriptionBase {
 				try {
 					return lexicons.assertValidXrpcMessage<RepoEvent>(ids.ComAtprotoSyncSubscribeRepos, value)
 				} catch (err) {
-					console.error('repo subscription skipped invalid message', err)
+					console.error('🟠 repo subscription skipped invalid message', err)
 				}
 			},
 		})
@@ -30,12 +30,14 @@ export abstract class FirehoseSubscriptionBase {
 	abstract handleEvent(evt: RepoEvent): Promise<void>
 
 	async run(subscriptionReconnectDelay: number) {
+		console.log('')
+		console.log('🟢 repo subscription started...')
 		try {
 			for await (const evt of this.sub) {
 				try {
 					await this.handleEvent(evt)
 				} catch (err) {
-					console.error('repo subscription could not handle message', err)
+					console.error('🟡 repo subscription could not handle message', err)
 				}
 				// update stored cursor every 20 events or so
 				if (isCommit(evt) && evt.seq % 20 === 0) {
@@ -43,7 +45,7 @@ export abstract class FirehoseSubscriptionBase {
 				}
 			}
 		} catch (err) {
-			console.error('repo subscription errored', err)
+			console.error('🔴 repo subscription errored', err)
 			setTimeout(() => this.run(subscriptionReconnectDelay), subscriptionReconnectDelay)
 		}
 	}
