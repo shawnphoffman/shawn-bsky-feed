@@ -17,7 +17,10 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
-				// console.log('\n')
+				if (create.record.text.includes('test wow')) {
+					console.log('\n')
+					console.log('🤯', create)
+				}
 
 				// SHAWNBOT POSTS
 				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
