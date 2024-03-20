@@ -20,7 +20,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				// console.log('\n')
 
 				// SHAWNBOT POSTS
-				if (create.author === process.env.SHAWNBOT_DID) {
+				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
 					console.log('\n+++++++++++++++++++++++++')
 					console.log('🆕 ShawnBot', create.record.text)
 
@@ -80,26 +80,30 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				}
 
 				// MISC POSTS
-				if (includeDids.includes(create.author)) {
-					console.log('\n+++++++++++++++++++++++++')
-					console.log('🆕 IncludeDID', create.record.text)
+				try {
+					if (includeDids.includes(create.author)) {
+						console.log('\n+++++++++++++++++++++++++')
+						console.log('🆕 IncludeDID', create.record.text)
 
-					// Ignore replies
-					if (create.record.reply !== undefined) {
-						console.log(`❌ Ignoring reply: ${create.record.text}`)
-						return false
+						// Ignore replies
+						if (create.record.reply !== undefined) {
+							console.log(`❌ Ignoring reply: ${create.record.text}`)
+							return false
+						}
+
+						// Only include posts with embeds
+						const hasEmbed = create.record.embed !== undefined
+
+						console.log(` - HasEmbed?: ${hasEmbed}`)
+
+						return hasEmbed
 					}
-
-					// Only include posts with embeds
-					const hasEmbed = create.record.embed !== undefined
-
-					console.log(` - HasEmbed?: ${hasEmbed}`)
-
-					return hasEmbed
+				} catch (error) {
+					console.error(`❌ Error with includes`, error)
 				}
 
 				// C.K. Andor posts
-				if (create.author === process.env.CK_DID && process.env.CK_ANDOR_POST === 'true') {
+				if (create.author === process.env.CK_DID && process.env.CK_ANDOR_POST == 'true') {
 					if (create.record.text.toLowerCase().includes('one day closer to')) {
 						console.log('\n+++++++++++++++++++++++++')
 						console.log('🆕 CK Andor', create.record.text)
