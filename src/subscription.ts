@@ -15,7 +15,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		// console.log(`⚫ ${ops.posts.creates.length} creates, ${ops.posts.deletes.length} deletes`)
 		if (evt.seq % 1000 === 0) {
 			console.log('\n')
-			console.log('🤖', evt.ops)
+			console.log('🤖', { ops, seq: evt.seq, time: evt.time })
 		}
 
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
