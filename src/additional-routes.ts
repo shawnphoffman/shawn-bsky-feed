@@ -27,6 +27,16 @@ const makeRouter = (ctx: AppContext) => {
 		res.sendStatus(200)
 	})
 
+	router.get('/list', async (_req, res) => {
+		const posts = await ctx.db.selectFrom('post').selectAll().orderBy('indexedAt', 'desc').execute()
+		console.log(`📙 /list posts`)
+		for (const post of posts) {
+			console.log(`   - ${post.uri} (${post.indexedAt})`)
+		}
+		console.log(`📙 end/list`)
+		res.sendStatus(200)
+	})
+
 	router.get('/redis', async (req, res) => {
 		try {
 			const data = await redis.hgetall(RedisKeys.ShawnBotPost)

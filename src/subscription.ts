@@ -12,11 +12,11 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 	async handleEvent(evt: RepoEvent) {
 		if (!isCommit(evt)) return
 		const ops = await getOpsByType(evt)
+		// console.log(`⚫ ${ops.posts.creates.length} creates, ${ops.posts.deletes.length} deletes`)
 
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
-				// console.log(create)
 				// console.log('\n')
 
 				// SHAWNBOT POSTS
