@@ -14,8 +14,16 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		const ops = await getOpsByType(evt)
 		// console.log(`⚫ ${ops.posts.creates.length} creates, ${ops.posts.deletes.length} deletes`)
 		if (evt.seq % 1000 === 0) {
-			console.log('\n')
-			console.log('🤖', { seq: evt.seq, time: evt.time })
+			// console.log('\n')
+			try {
+				const eventDate = new Date(evt.time)
+				const pstDate = eventDate.toLocaleString('en-US', {
+					timeZone: 'America/Los_Angeles',
+				})
+				console.log('🤖', { seq: evt.seq, time: pstDate })
+			} catch {
+				// DO NOTHING
+			}
 		}
 
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
