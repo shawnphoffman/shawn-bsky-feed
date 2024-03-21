@@ -35,7 +35,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				}
 
 				// SHAWNBOT POSTS
-				if (create.author === process.env.FEEDGEN_PUBLISHER_DID) {
+				if (create.author === process.env.SHAWNBOT_DID) {
 					console.log('\n+++++++++++++++++++++++++')
 					console.log('🆕 ShawnBot', create.record.text)
 

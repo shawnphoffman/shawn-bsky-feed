@@ -22,6 +22,7 @@ const run = async () => {
 ☑️ node: ${process.version}
 💽 db: ${process.env.FEEDGEN_SQLITE_LOCATION}
 👤 did: ${process.env.FEEDGEN_PUBLISHER_DID}
+🖱️ cursor: ${process.env.DISABLE_CURSOR !== 'true' ? 'enabled' : 'disabled'}
 ==================================`)
 }
 

@@ -61,27 +61,14 @@ export class FeedGenerator {
 
 	async start(): Promise<http.Server> {
 		await migrateToLatest(this.db)
-		this.firehose.run(this.cfg.subscriptionReconnectDelay)
 
-		// // NOTE STOP DOING THIS
-		// const feed = await getPodcastEmbedFeed()
-		// await this.firehose.db
-		// 	.insertInto('post')
-		// 	.values(
-		// 		feed.map(({ post }) => {
-		// 			return {
-		// 				uri: post.uri,
-		// 				cid: post.cid,
-		// 				indexedAt: post.indexedAt,
-		// 				// @ts-ignore
-		// 				replyParent: post?.record?.reply?.parent?.uri,
-		// 				// @ts-ignore
-		// 				replyRoot: post?.record?.reply?.root?.uri,
-		// 			}
-		// 		})
-		// 	)
-		// 	.onConflict(oc => oc.doNothing())
-		// 	.execute()
+		if (process.env.DISABLE_FIREHOSE !== 'true') {
+			this.firehose.run(this.cfg.subscriptionReconnectDelay)
+		} else {
+			console.log('\n🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫')
+			console.log('🔥🔥 FIREHOSE DISABLED 🔥🔥')
+			console.log('🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫')
+		}
 
 		this.server = this.app.listen(this.cfg.port)
 
