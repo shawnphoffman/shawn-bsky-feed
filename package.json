@@ -1,7 +1,7 @@
 {
-	"name": "feed-generator",
+	"name": "shawnbot-feed-generator",
 	"version": "1.0.0",
-	"description": "atproto feed generator",
+	"description": "Fork of the feed generator for shawnbot",
 	"main": "index.js",
 	"author": "Shawn Hoffman",
 	"license": "MIT",
@@ -9,12 +9,10 @@
 		"publishFeed": "tsx scripts/publishFeedGen.ts",
 		"removeFeed": "tsx scripts/removeFeed.ts",
 		"start": "node --no-warnings dist",
-		"start-new": "tsx src/index.ts",
 		"dev": "nodemon src/index.ts",
+		"start-new": "tsx src/index.ts",
+		"dev-new": "tsx watch src/index.ts",
 		"build": "tsc"
-	},
-	"engines": {
-		"node": "18.x"
 	},
 	"dependencies": {
 		"@atproto/api": "^0.12.1",
@@ -39,5 +37,8 @@
 		"@types/node": "^20.11.30",
 		"nodemon": "^3.1.0",
 		"typescript": "^5.4.2"
+	},
+	"engines": {
+		"node": "18.x"
 	}
 }

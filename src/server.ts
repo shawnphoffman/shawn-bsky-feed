@@ -7,10 +7,10 @@ import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import { createDb, Database, migrateToLatest } from './db'
 import { FirehoseSubscription } from './subscription'
-import { AppContext, Config } from './config'
-import wellKnown from './well-known'
-import additionalRoutes from './additional-routes'
-// import { getPodcastEmbedFeed } from './util/bsky'
+import { AppContext, Config } from './types/config'
+import wellKnown from './routes/well-known'
+import miscRoutes from './routes/misc'
+import crudRoutes from './routes/crud'
 
 export class FeedGenerator {
 	public app: express.Application
@@ -57,7 +57,8 @@ export class FeedGenerator {
 		//
 		app.use(server.xrpc.router)
 		app.use(wellKnown(ctx))
-		app.use(additionalRoutes(ctx))
+		app.use(miscRoutes(ctx))
+		app.use(crudRoutes(ctx))
 
 		return new FeedGenerator(app, db, firehose, cfg)
 	}

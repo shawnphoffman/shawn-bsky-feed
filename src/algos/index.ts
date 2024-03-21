@@ -1,4 +1,4 @@
-import { AppContext } from '../config'
+import { AppContext } from '../types/config'
 import { AppBskyFeedGetFeedSkeleton } from '@atproto/api'
 import * as shawnPods from './shawnbot-pods'
 

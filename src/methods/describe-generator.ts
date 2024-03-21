@@ -1,5 +1,5 @@
 import { Server } from '@atproto/bsky/src/lexicon'
-import { AppContext } from '../config'
+import { AppContext } from '../types/config'
 import algos from '../algos'
 import { AtUri } from '@atproto/syntax'
 
