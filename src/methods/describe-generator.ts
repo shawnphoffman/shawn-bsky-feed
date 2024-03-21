@@ -1,4 +1,4 @@
-import { Server } from '../lexicon'
+import { Server } from '@atproto/bsky/src/lexicon'
 import { AppContext } from '../config'
 import algos from '../algos'
 import { AtUri } from '@atproto/syntax'

@@ -1,5 +1,4 @@
 import { BskyAgent } from '@atproto/api'
-import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
 import dotenv from 'dotenv'
 

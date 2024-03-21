@@ -1,16 +1,16 @@
 import { Subscription } from '@atproto/xrpc-server'
 import { cborToLexRecord, readCar } from '@atproto/repo'
 import { BlobRef } from '@atproto/lexicon'
-import { ids, lexicons } from '../lexicon/lexicons'
-import { Record as PostRecord } from '../lexicon/types/app/bsky/feed/post'
-import { Record as RepostRecord } from '../lexicon/types/app/bsky/feed/repost'
-import { Record as LikeRecord } from '../lexicon/types/app/bsky/feed/like'
-import { Record as FollowRecord } from '../lexicon/types/app/bsky/graph/follow'
-import { Commit, OutputSchema as RepoEvent, isCommit } from '../lexicon/types/com/atproto/sync/subscribeRepos'
+import { ids, lexicons } from '@atproto/bsky/src/lexicon/lexicons'
+import { AppBskyFeedPost } from '@atproto/api'
+import { AppBskyFeedRepost } from '@atproto/api'
+import { AppBskyFeedLike } from '@atproto/api'
+import { AppBskyGraphFollow } from '@atproto/api'
+import { ComAtprotoSyncSubscribeRepos } from '@atproto/api'
 import { Database } from '../db'
 
 export abstract class FirehoseSubscriptionBase {
-	public sub: Subscription<RepoEvent>
+	public sub: Subscription<ComAtprotoSyncSubscribeRepos.Commit>
 
 	constructor(public db: Database, public service: string) {
 		this.sub = new Subscription({
@@ -19,7 +19,7 @@ export abstract class FirehoseSubscriptionBase {
 			getParams: () => this.getCursor(),
 			validate: (value: unknown) => {
 				try {
-					return lexicons.assertValidXrpcMessage<RepoEvent>(ids.ComAtprotoSyncSubscribeRepos, value)
+					return lexicons.assertValidXrpcMessage<ComAtprotoSyncSubscribeRepos.Commit>(ids.ComAtprotoSyncSubscribeRepos, value)
 				} catch (err) {
 					console.error('🟠 repo subscription skipped invalid message', err)
 				}
@@ -27,7 +27,7 @@ export abstract class FirehoseSubscriptionBase {
 		})
 	}
 
-	abstract handleEvent(evt: RepoEvent): Promise<void>
+	abstract handleEvent(evt: ComAtprotoSyncSubscribeRepos.Commit): Promise<void>
 
 	async run(subscriptionReconnectDelay: number) {
 		console.log('')
@@ -40,7 +40,7 @@ export abstract class FirehoseSubscriptionBase {
 					console.error('🟡 repo subscription could not handle message', err)
 				}
 				// update stored cursor every 20 events or so
-				if (isCommit(evt) && evt.seq % 1000 === 0 && process.env.DISABLE_CURSOR !== 'true') {
+				if (ComAtprotoSyncSubscribeRepos.isCommit(evt) && evt.seq % 1000 === 0 && process.env.DISABLE_CURSOR !== 'true') {
 					await this.upsertCursor(evt.seq)
 				}
 			}
@@ -66,7 +66,7 @@ export abstract class FirehoseSubscriptionBase {
 	}
 }
 
-export const getOpsByType = async (evt: Commit): Promise<OperationsByType> => {
+export const getOpsByType = async (evt: ComAtprotoSyncSubscribeRepos.Commit): Promise<OperationsByType> => {
 	const car = await readCar(evt.blocks)
 	const opsByType: OperationsByType = {
 		posts: { creates: [], deletes: [] },
@@ -115,10 +115,10 @@ export const getOpsByType = async (evt: Commit): Promise<OperationsByType> => {
 }
 
 type OperationsByType = {
-	posts: Operations<PostRecord>
-	reposts: Operations<RepostRecord>
-	likes: Operations<LikeRecord>
-	follows: Operations<FollowRecord>
+	posts: Operations<AppBskyFeedPost.Record>
+	reposts: Operations<AppBskyFeedRepost.Record>
+	likes: Operations<AppBskyFeedLike.Record>
+	follows: Operations<AppBskyGraphFollow.Record>
 }
 
 type Operations<T = Record<string, unknown>> = {
@@ -137,19 +137,19 @@ type DeleteOp = {
 	uri: string
 }
 
-export const isPost = (obj: unknown): obj is PostRecord => {
+export const isPost = (obj: unknown): obj is AppBskyFeedPost.Record => {
 	return isType(obj, ids.AppBskyFeedPost)
 }
 
-export const isRepost = (obj: unknown): obj is RepostRecord => {
+export const isRepost = (obj: unknown): obj is AppBskyFeedRepost.Record => {
 	return isType(obj, ids.AppBskyFeedRepost)
 }
 
-export const isLike = (obj: unknown): obj is LikeRecord => {
+export const isLike = (obj: unknown): obj is AppBskyFeedLike.Record => {
 	return isType(obj, ids.AppBskyFeedLike)
 }
 
-export const isFollow = (obj: unknown): obj is FollowRecord => {
+export const isFollow = (obj: unknown): obj is AppBskyGraphFollow.Record => {
 	return isType(obj, ids.AppBskyGraphFollow)
 }
 
@@ -162,7 +162,7 @@ const isType = (obj: unknown, nsid: string) => {
 	}
 }
 
-// @TODO right now record validation fails on BlobRefs
+// NOTE right now record validation fails on BlobRefs
 // simply because multiple packages have their own copy
 // of the BlobRef class, causing instanceof checks to fail.
 // This is a temporary solution.

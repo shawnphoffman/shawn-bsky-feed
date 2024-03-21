@@ -1,13 +1,18 @@
 import { InvalidRequestError } from '@atproto/xrpc-server'
-import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
+import { AppBskyFeedGetFeedSkeleton } from '@atproto/api'
 import { AppContext } from '../config'
 
 // max 15 chars
 // This needs to match something
 export const shortname = 'shawnbot-pods'
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
-	let builder = ctx.db.selectFrom('post').selectAll().orderBy('indexedAt', 'desc').orderBy('cid', 'desc').limit(params.limit)
+export const handler = async (ctx: AppContext, params: AppBskyFeedGetFeedSkeleton.QueryParams) => {
+	let builder = ctx.db
+		.selectFrom('post')
+		.selectAll()
+		.orderBy('indexedAt', 'desc')
+		.orderBy('cid', 'desc')
+		.limit(params.limit || 50)
 	if (params.cursor) {
 		const [indexedAt, cid] = params.cursor.split('::')
 		if (!indexedAt || !cid) {

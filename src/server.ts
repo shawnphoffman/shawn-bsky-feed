@@ -2,7 +2,7 @@ import http from 'http'
 import events from 'events'
 import express from 'express'
 import { DidResolver, MemoryCache } from '@atproto/identity'
-import { createServer } from './lexicon'
+import { createServer } from '@atproto/bsky/src/lexicon'
 import feedGeneration from './methods/feed-generation'
 import describeGenerator from './methods/describe-generator'
 import { createDb, Database, migrateToLatest } from './db'
@@ -50,8 +50,11 @@ export class FeedGenerator {
 			didResolver,
 			cfg,
 		}
+		// getFeedSkeleton
 		feedGeneration(server, ctx)
+		// describeFeedGenerator
 		describeGenerator(server, ctx)
+		//
 		app.use(server.xrpc.router)
 		app.use(wellKnown(ctx))
 		app.use(additionalRoutes(ctx))

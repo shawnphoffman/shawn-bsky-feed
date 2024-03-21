@@ -1,20 +1,22 @@
-import { OutputSchema as RepoEvent, isCommit } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
-// import redis, { RedisKeys } from './util/redis'
 import { labelPostAsSpoiler } from './util/bsky'
+import { ComAtprotoSyncSubscribeRepos } from '@atproto/api'
 
 const includeDids = process.env.FEED_INCLUDE_DIDS?.split(',') ?? []
 
 // TODO - Cron job that deletes old posts from the db
-// TODO - Web UI for manual editing
+// TODO - Optimize the loooooops
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
-	async handleEvent(evt: RepoEvent) {
-		if (!isCommit(evt)) return
+	async handleEvent(evt: ComAtprotoSyncSubscribeRepos.Commit) {
+		// Is it a commit?
+		if (!ComAtprotoSyncSubscribeRepos.isCommit(evt)) return
+
+		// Parse the event
 		const ops = await getOpsByType(evt)
-		// console.log(`⚫ ${ops.posts.creates.length} creates, ${ops.posts.deletes.length} deletes`)
+
+		// Log every 1000 events for sanity
 		if (evt.seq % 1000 === 0) {
-			// console.log('\n')
 			try {
 				const eventDate = new Date(evt.time)
 				const pstDate = eventDate.toLocaleString('en-US', {
@@ -22,11 +24,15 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				})
 				console.log('🤖', { seq: evt.seq, time: pstDate })
 			} catch {
-				// DO NOTHING
+				// Do nothing
 			}
 		}
 
+		// Deleted posts
+		// TODO Do I even need this if I clean things up occasionally?
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
+
+		// Incoming posts
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
 				if (create.record.text.includes('test wow')) {
@@ -132,6 +138,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 			})
 			.map(create => {
 				console.log(`  ✅ Creating: ${create.uri}`)
+				// Map them to the db schema
 				return {
 					uri: create.uri,
 					cid: create.cid,
@@ -141,11 +148,10 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				}
 			})
 
+		// Process deleted posts
+		// TODO - Aggregate these and delete them in batches?
 		if (postsToDelete.length > 0) {
 			try {
-				// TODO - Aggregate these and delete them in batches
-				// const t = await redis.hdel(RedisKeys.ShawnBotPost, ...postsToDelete)
-				// console.log(`Deleting: ${t}`)
 				const deletedRows = await this.db.deleteFrom('post').where('uri', 'in', postsToDelete).executeTakeFirst()
 				if (deletedRows.numDeletedRows > 0) {
 					console.log('🗑️  Deleted:', deletedRows.numDeletedRows.toString())
@@ -154,13 +160,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				console.error('❌❌🗑️ Error deleting posts:', error)
 			}
 		}
+
+		// Process new posts
 		if (postsToCreate.length > 0) {
-			// const redisPosts = postsToCreate.reduce((memo, el) => {
-			// 	memo[el.uri] = el
-			// 	return memo
-			// }, {})
-			// const t = await redis.hset(RedisKeys.ShawnBotPost, redisPosts)
-			// console.log(`Creating: ${t}`)
 			console.log('💽  Add posts to db:', postsToCreate.length)
 			await this.db
 				.insertInto('post')
@@ -169,7 +171,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				.execute()
 		}
 
-		// Moderation
+		// Moderation Service Shtuff
+		// TODO - Change the .filter() above to .reduce() and do this in one pass
 		ops.posts.creates.forEach(async post => {
 			if (!post?.record?.facets) return
 
@@ -185,7 +188,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
 			if (!hasSpoilerTag) return
 
-			console.log('')
 			console.log('⚠️ Labeling spoiler post: ', post.uri)
 
 			await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
