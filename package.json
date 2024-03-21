@@ -8,10 +8,8 @@
 	"scripts": {
 		"publishFeed": "tsx scripts/publishFeedGen.ts",
 		"removeFeed": "tsx scripts/removeFeed.ts",
-		"start": "node --no-warnings dist",
-		"dev": "nodemon src/index.ts",
-		"start-new": "tsx src/index.ts",
-		"dev-new": "tsx watch src/index.ts",
+		"start": "tsx src/index.ts",
+		"dev": "tsx watch src/index.ts",
 		"build": "tsc"
 	},
 	"dependencies": {
