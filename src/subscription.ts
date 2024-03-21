@@ -32,12 +32,30 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		// TODO Do I even need this if I clean things up occasionally?
 		const postsToDelete = ops.posts.deletes.map(del => del.uri)
 
+		const spoilerPosts: { uri: string; cid: string }[] = []
+
 		// Incoming posts
 		const postsToCreate = ops.posts.creates
 			.filter(create => {
+				// DEBUGGING
 				if (create.record.text.includes('test wow')) {
 					console.log('\n')
 					console.log('🤯', create)
+				}
+
+				// SPOILER POST LABELING
+				// if (post.record.langs?.includes('en') === false) return
+				const hasSpoilerTag = create?.record?.facets
+					? create.record.facets.some(facet => {
+							return facet.features.some(f => {
+								if (f.$type !== 'app.bsky.richtext.facet#tag') return false
+								const wow = f as { tag: string }
+								return wow.tag?.toLowerCase().includes('spoiler')
+							})
+					  })
+					: false
+				if (hasSpoilerTag) {
+					spoilerPosts.push({ uri: create.uri, cid: create.cid })
 				}
 
 				// SHAWNBOT POSTS
@@ -172,24 +190,8 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		}
 
 		// Moderation Service Shtuff
-		// TODO - Change the .filter() above to .reduce() and do this in one pass
-		ops.posts.creates.forEach(async post => {
-			if (!post?.record?.facets) return
-
-			if (post.record.langs?.includes('en') === false) return
-
-			const hasSpoilerTag = post.record.facets.some(facet => {
-				return facet.features.some(f => {
-					if (f.$type !== 'app.bsky.richtext.facet#tag') return false
-					const wow = f as { tag: string }
-					return wow.tag?.toLowerCase().includes('spoiler')
-				})
-			})
-
-			if (!hasSpoilerTag) return
-
+		spoilerPosts.forEach(async post => {
 			console.log('⚠️ Labeling spoiler post: ', post.uri)
-
 			await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
 		})
 	}
