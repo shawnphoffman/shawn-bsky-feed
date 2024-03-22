@@ -62,6 +62,9 @@ export abstract class FirehoseSubscriptionBase {
 
 	async getCursor(): Promise<{ cursor?: number }> {
 		const res = await this.db.selectFrom('sub_state').select('cursor').where('service', '=', this.service).executeTakeFirst()
+		if (process.env.DISABLE_CURSOR === 'true') {
+			return {}
+		}
 		return res ? { cursor: res.cursor } : {}
 	}
 }
