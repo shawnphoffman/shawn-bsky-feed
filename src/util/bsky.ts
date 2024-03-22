@@ -41,12 +41,7 @@ export const labelPostAsSpoiler = async ({ uri, cid }) => {
 			return
 		}
 
-		const data = {
-			event: {
-				$type: 'tools.ozone.moderation.defs#modEventLabel',
-				createLabelVals: ['spoiler'],
-				negateLabelVals: [],
-			},
+		const baseData = {
 			subject: {
 				$type: 'com.atproto.repo.strongRef',
 				uri: uri,
@@ -57,10 +52,58 @@ export const labelPostAsSpoiler = async ({ uri, cid }) => {
 			createdAt: new Date().toISOString(),
 		}
 
-		await agent.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!).api.xrpc.call('tools.ozone.moderation.emitEvent', {}, data)
+		const labelData = {
+			...baseData,
+			event: {
+				$type: 'tools.ozone.moderation.defs#modEventLabel',
+				createLabelVals: ['spoiler'],
+				negateLabelVals: [],
+				comment: 'Spoiler auto-labeled via firehose',
+			},
+		}
+		const ackData = {
+			...baseData,
+			event: {
+				$type: 'tools.ozone.moderation.defs#modEventAcknowledge',
+				comment: 'Spoiler auto-acked via firehose',
+			},
+		}
+
+		await agent
+			.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!)
+			.api.xrpc.call('tools.ozone.moderation.emitEvent', {}, labelData)
+		await agent.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!).api.xrpc.call('tools.ozone.moderation.emitEvent', {}, ackData)
 
 		// console.log('temp', temp)
 	} catch (error) {
 		console.log('❌❌❌ spoiler label error', error)
+	}
+}
+
+export const getModRecord = async ({ uri, cid }) => {
+	try {
+		const agent = new AtpAgent({ service: 'https://bsky.social' })
+
+		const loginResponse = await agent.login({
+			identifier: process.env.MOD_BSKY_USERNAME!,
+			password: process.env.MOD_BSKY_PASSWORD!,
+		})
+		if (!loginResponse?.success) {
+			console.error('BLUESKY MOD LOGIN FAILED', loginResponse)
+			return
+		}
+
+		const modRecord = await agent
+			.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!)
+			.api.xrpc.call('tools.ozone.moderation.getRecord', {
+				uri,
+				cid,
+			})
+
+		console.log('modRecord.headers', modRecord.headers)
+
+		return modRecord
+	} catch (error) {
+		console.log('❌❌❌ mod record error', error)
 	}
 }
