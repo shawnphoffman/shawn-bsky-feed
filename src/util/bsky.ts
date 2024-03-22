@@ -1,4 +1,4 @@
-import { BskyAgent } from '@atproto/api'
+import { AppBskyFeedSearchPosts, BskyAgent, AtpAgent } from '@atproto/api'
 
 import dotenv from 'dotenv'
 
@@ -26,6 +26,39 @@ export const getPodcastEmbedFeed = async () => {
 	// console.log('feed', JSON.stringify(feed, null, 2))
 
 	return feed
+}
+
+export const getSpoilerPosts = async (cursor?: string, limit: number = 10) => {
+	const agent = new AtpAgent({ service: 'https://bsky.social' })
+
+	const loginResponse = await agent.login({ identifier: handle, password })
+	if (!loginResponse?.success) {
+		console.error('BLUESKY LOGIN FAILED', loginResponse)
+		return null
+	}
+
+	const params: AppBskyFeedSearchPosts.QueryParams = {
+		// q: '*spoiler*',
+		q: '#spoiler',
+		cursor,
+		limit,
+	}
+
+	console.log('params', params)
+
+	const options: AppBskyFeedSearchPosts.CallOptions = {}
+
+	const searchResp = await agent.api.app.bsky.feed.searchPosts(params, options)
+	// const searchResp = await agent
+	// 	.withProxy('atproto_labeler', process.env.MOD_BSKY_USERNAME!)
+	// 	.api.xrpc.call('app.bsky.feed.searchPosts', params)
+
+	if (!searchResp.success) {
+		console.error('BLUESKY SPOILER SEARCH FAILED', searchResp)
+		return searchResp.data
+	}
+
+	return searchResp.data
 }
 
 export const labelPostAsSpoiler = async ({ uri, cid }) => {

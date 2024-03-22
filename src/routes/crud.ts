@@ -6,23 +6,23 @@ import cors from 'cors'
 
 var jsonParser = bodyParser.json()
 
+// ================
+// KEY CHECK SHIT
+// ================
+export const checkKey = function (req: express.Request, res: express.Response, next: express.NextFunction) {
+	console.log('🔑🔑 CHECKING KEY 🔑🔑')
+	const key = req.headers['x-force-key']
+	if (process.env.FORCE_KEY !== key) {
+		console.warn('🚫🚫 INVALID OR MISSING KEY 🚫🚫')
+		return res.status(403).send('Forbidden')
+	}
+	next()
+}
+
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
 
 	router.use(cors())
-
-	// ================
-	// KEY CHECK SHIT
-	// ================
-	const checkKey = function (req: express.Request, res: express.Response, next: express.NextFunction) {
-		console.log('🔑🔑 CHECKING KEY 🔑🔑')
-		const key = req.headers['x-force-key']
-		if (process.env.FORCE_KEY !== key) {
-			console.warn('🚫🚫 INVALID OR MISSING KEY 🚫🚫')
-			return res.status(403).send('Forbidden')
-		}
-		next()
-	}
 
 	// ================
 	// CRUD

@@ -1,6 +1,10 @@
 import express from 'express'
 import { AppContext } from '../types/config'
 import redis, { RedisKeys } from '../util/redis'
+import { getModRecord, getSpoilerPosts, labelPostAsSpoiler } from '../util/bsky'
+import { OutputSchema } from '@atproto/bsky/src/lexicon/types/app/bsky/feed/searchPosts'
+import type { Record } from '@atproto/api/dist/client/types/app/bsky/feed/post'
+import { checkKey } from './crud'
 
 const makeRouter = (ctx: AppContext) => {
 	const router = express.Router()
@@ -60,6 +64,68 @@ const makeRouter = (ctx: AppContext) => {
 			res.json({ length: dataArray.length, redis: dataArray })
 		} catch (error) {
 			console.log('error', error)
+			res.json({ error })
+		}
+	})
+
+	// ================
+	// TEST
+	// ================
+
+	router.get('/backfill/spoilers', checkKey, async (req: express.Request, res: express.Response) => {
+		try {
+			const limit = req.query.limit ? parseInt(req.query.limit as string) : 10
+			const searchData: OutputSchema | null = await getSpoilerPosts(req.query.cursor as string, limit)
+
+			const spoilerPosts: any[] = []
+			const fetchedRecords: any[] = []
+
+			if (!searchData) {
+				return res.json({ error: 'no search data' })
+			}
+
+			// Check for facets
+			searchData.posts.forEach(post => {
+				const record = post?.record as Record
+				const hasSpoilerTag = record?.facets
+					? record.facets.some(facet => {
+							return facet.features.some(f => {
+								if (f.$type !== 'app.bsky.richtext.facet#tag') return false
+								const wow = f as { tag: string }
+								return wow.tag?.toLowerCase().includes('spoiler')
+							})
+					  })
+					: false
+				if (hasSpoilerTag) {
+					// spoilerPosts.push({ uri: post.uri, cid: post.cid })
+					spoilerPosts.push(post)
+				}
+			})
+
+			for (const post of spoilerPosts) {
+				// const modRecord = await getModRecord({ uri: post.uri, cid: post.cid })
+
+				// if (!modRecord || !modRecord.success) continue
+
+				// fetchedRecords.push(modRecord.data)
+
+				// if (
+				// 	modRecord.data?.labels?.some(label => {
+				// 		return label.val === 'spoiler' && label.src === process.env.MOD_BSKY_USERNAME
+				// 	})
+				// ) {
+				// 	console.log('already labeled as spoiler', modRecord.data.cid)
+				// 	continue
+				// } else {
+				// 	console.log('labeling as spoiler', modRecord.data.cid)
+				// 	// await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+				// }
+				await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+			}
+
+			res.json({ fetchedRecords, spoilerPosts, count: spoilerPosts.length, searchData })
+		} catch (error) {
+			console.log('search error', error)
 			res.json({ error })
 		}
 	})
