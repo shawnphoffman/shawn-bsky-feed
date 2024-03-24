@@ -122,23 +122,23 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				try {
 					if (includeDids.includes(create.author)) {
 						console.log('\n+++++++++++++++++++++++++')
-						console.log('🆕 IncludeDID', create.record.text)
+						console.log('🆕➕ IncludeDID', create.record.text)
 
 						// Ignore replies
 						if (create.record.reply !== undefined) {
-							console.log(`❌ Ignoring reply: ${create.record.text}`)
+							console.log(`❌➕ Ignoring include reply: ${create.record.text}`)
 							return false
 						}
 
 						// Only include posts with embeds
 						const hasEmbed = create.record.embed !== undefined
 
-						console.log(` - HasEmbed?: ${hasEmbed}`)
+						console.log(` - ➕HasEmbed?: ${hasEmbed}`)
 
 						return hasEmbed
 					}
 				} catch (error) {
-					console.error(`❌ Error with includes`, error)
+					console.error(`❌➕ Error with includes`, error)
 				}
 
 				// C.K. Andor posts

@@ -37,6 +37,13 @@ const makeRouter = (ctx: AppContext) => {
 		if (!req.body) {
 			return res.status(400).send('Bad Request')
 		}
+		const { cid, uri, indexedAt } = req.body
+
+		if (!cid || !uri || !indexedAt) {
+			return res.status(400).send('Bad Request')
+		}
+
+		console.log('Adding post', req.body)
 		const post: Post = req.body
 		const resp = await ctx.db
 			.insertInto('post')
