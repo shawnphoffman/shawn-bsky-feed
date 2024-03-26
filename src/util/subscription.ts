@@ -65,6 +65,8 @@ export abstract class FirehoseSubscriptionBase {
 		if (process.env.DISABLE_CURSOR === 'true') {
 			console.log('🐀 ignoring cursor')
 			return { cursor: process.env.OVERRIDE_CURSOR ? parseInt(process.env.OVERRIDE_CURSOR) : undefined }
+		} else {
+			console.log(`🐁 using cursor: ${res?.cursor || 'unknown'}`)
 		}
 		return res ? { cursor: res.cursor } : {}
 	}
