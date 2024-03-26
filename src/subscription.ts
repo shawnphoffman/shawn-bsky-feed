@@ -1,6 +1,7 @@
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import { labelPostAsSpoiler } from './util/bsky'
 import { ComAtprotoSyncSubscribeRepos } from '@atproto/api'
+import { addToStarWarsFeed } from './util/shawnbot'
 
 const includeDids = process.env.FEED_INCLUDE_DIDS?.split(',') ?? []
 
@@ -182,6 +183,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		// Process new posts
 		if (postsToCreate.length > 0) {
 			console.log('💽  Add posts to db:', postsToCreate.length)
+
+			if (process.env.CALL_FORCE_ENDPOINT === 'true') {
+				for (const post of postsToCreate) {
+					console.log('🚀 Calling force endpoint:', post.uri)
+					await addToStarWarsFeed(post)
+				}
+			}
+
 			await this.db
 				.insertInto('post')
 				.values(postsToCreate)
