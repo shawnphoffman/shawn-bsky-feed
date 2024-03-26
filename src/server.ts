@@ -67,6 +67,7 @@ export class FeedGenerator {
 		await migrateToLatest(this.db)
 
 		if (process.env.DISABLE_FIREHOSE !== 'true') {
+			console.log('🔥🔥 STARTING THE FIREHOSE 🔥🔥')
 			this.firehose.run(this.cfg.subscriptionReconnectDelay)
 		} else {
 			console.log('\n🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫🚫')

@@ -40,7 +40,7 @@ export abstract class FirehoseSubscriptionBase {
 					console.error('🟡 repo subscription could not handle message', err)
 				}
 				// update stored cursor every 20 events or so
-				if (ComAtprotoSyncSubscribeRepos.isCommit(evt) && evt.seq % 1000 === 0 && process.env.DISABLE_CURSOR !== 'true') {
+				if (ComAtprotoSyncSubscribeRepos.isCommit(evt) && evt.seq % 1000 === 0) {
 					await this.upsertCursor(evt.seq)
 				}
 			}
@@ -64,7 +64,7 @@ export abstract class FirehoseSubscriptionBase {
 		const res = await this.db.selectFrom('sub_state').select('cursor').where('service', '=', this.service).executeTakeFirst()
 		if (process.env.DISABLE_CURSOR === 'true') {
 			console.log('🐀 ignoring cursor')
-			return {}
+			return { cursor: process.env.OVERRIDE_CURSOR ? parseInt(process.env.OVERRIDE_CURSOR) : undefined }
 		}
 		return res ? { cursor: res.cursor } : {}
 	}
