@@ -55,7 +55,7 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 							})
 					  })
 					: false
-				if (hasSpoilerTag) {
+				if (hasSpoilerTag || create.record.text.toLowerCase().includes('[spoiler]')) {
 					spoilerPosts.push({ uri: create.uri, cid: create.cid })
 				}
 
