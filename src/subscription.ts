@@ -205,7 +205,9 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 				await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
 			}
 		} else {
-			console.log('⚠️ Ignoring spoilers')
+			if (spoilerPosts.length > 0) {
+				console.log('⚠️ Ignoring spoilers')
+			}
 		}
 	}
 }
