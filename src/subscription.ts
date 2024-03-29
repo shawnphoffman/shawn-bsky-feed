@@ -199,9 +199,13 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 		}
 
 		// Moderation Service Shtuff
-		for (const post of spoilerPosts) {
-			console.log('⚠️ Labeling spoiler post: ', post.uri)
-			await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+		if (process.env.LABEL_SPOILERS == 'true') {
+			for (const post of spoilerPosts) {
+				console.log('⚠️ Labeling spoiler post: ', post.uri)
+				await labelPostAsSpoiler({ uri: post.uri, cid: post.cid })
+			}
+		} else {
+			console.log('⚠️ Ignoring spoilers')
 		}
 	}
 }
