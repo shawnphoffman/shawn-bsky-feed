@@ -9,6 +9,29 @@ import { AppBskyGraphFollow } from '@atproto/api'
 import { ComAtprotoSyncSubscribeRepos } from '@atproto/api'
 import { Database } from '../db'
 
+import io from '@pm2/io'
+
+const cursor = io.metric({
+	name: 'Firehose Cursor',
+	id: 'feed/subscription/cursor',
+})
+const invalidMessages = io.counter({
+	name: 'Invalid Messages',
+	id: 'feed/subscription/invalid_messages',
+})
+const subStarts = io.counter({
+	name: 'Subscription Starts',
+	id: 'feed/subscription/starts',
+})
+const subErrors = io.counter({
+	name: 'Subscription Errors',
+	id: 'feed/subscription/errors',
+})
+const cantHandles = io.counter({
+	name: 'Unhandled Messages',
+	id: 'feed/subscription/cantHandles',
+})
+
 export abstract class FirehoseSubscriptionBase {
 	public sub: Subscription<ComAtprotoSyncSubscribeRepos.Commit>
 
@@ -21,6 +44,7 @@ export abstract class FirehoseSubscriptionBase {
 				try {
 					return lexicons.assertValidXrpcMessage<ComAtprotoSyncSubscribeRepos.Commit>(ids.ComAtprotoSyncSubscribeRepos, value)
 				} catch (err) {
+					invalidMessages.inc()
 					console.error('🟠 repo subscription skipped invalid message', err)
 				}
 			},
@@ -32,20 +56,26 @@ export abstract class FirehoseSubscriptionBase {
 	async run(subscriptionReconnectDelay: number) {
 		console.log('')
 		console.log('🟢 repo subscription started...')
+		subStarts.inc()
 		try {
 			for await (const evt of this.sub) {
 				try {
 					await this.handleEvent(evt)
 				} catch (err) {
-					console.error('🟡 repo subscription could not handle message', err)
+					if (!err.message?.includes('decode varint')) {
+						console.error('🟡 repo subscription could not handle message', err)
+						cantHandles.inc()
+					}
 				}
 				// update stored cursor every 20 events or so
 				if (ComAtprotoSyncSubscribeRepos.isCommit(evt) && evt.seq % 1000 === 0) {
+					cursor.set(evt.seq)
 					await this.upsertCursor(evt.seq)
 				}
 			}
 		} catch (err) {
 			console.error('🔴 repo subscription errored', err)
+			subErrors.inc()
 			setTimeout(() => this.run(subscriptionReconnectDelay), subscriptionReconnectDelay)
 		}
 	}
