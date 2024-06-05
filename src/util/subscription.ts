@@ -45,7 +45,7 @@ export abstract class FirehoseSubscriptionBase {
 					return lexicons.assertValidXrpcMessage<ComAtprotoSyncSubscribeRepos.Commit>(ids.ComAtprotoSyncSubscribeRepos, value)
 				} catch (err) {
 					invalidMessages.inc()
-					console.error('🟠 repo subscription skipped invalid message', err)
+					console.error('🟠 repo subscription skipped invalid message', err.message)
 				}
 			},
 		})
